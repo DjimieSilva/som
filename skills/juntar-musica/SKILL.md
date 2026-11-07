@@ -24,10 +24,12 @@ Se o nome do anexo for genérico (`audio_2026-11-07.mp3`), pergunta ao Jaime o a
 ## 2. Link
 
 ```powershell
-Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4560/api/link' -ContentType 'application/json' -Body (@{ url = 'https://…' } | ConvertTo-Json)
+Invoke-RestMethod -Method Post -Uri 'http://127.0.0.1:4560/api/link' -ContentType 'application/json' -Body (@{ url = 'https://…'; nome = 'Artista - Título' } | ConvertTo-Json)
 ```
 
 Funciona com links **diretos** para ficheiros de áudio: Google Drive (partilha "qualquer pessoa com o link"), Dropbox, archive.org, Free Music Archive, compras do Bandcamp, um `.mp3` num site.
+
+O campo `nome` é opcional, mas usa-o sempre que souberes o artista e o título (da mensagem ou do link): sem ele, ficheiros sem etiquetas aparecem como «Desconhecido».
 
 A resposta traz `faixa.titulo` e `faixa.artista`. Se der erro, o campo `erro` já vem em português: passa-o à pessoa tal como está.
 

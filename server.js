@@ -767,7 +767,7 @@ function linkDireto(u) {
   if (/(^|\.)dropbox\.com$/.test(u.hostname)) { u.searchParams.set('dl', '1'); return u; }
   return u;
 }
-async function importarLink(texto) {
+async function importarLink(texto, nomeDado) {
   let u;
   try { u = new URL(String(texto || '').trim()); } catch { throw new Error('Isso não parece um link'); }
   if (!/^https?:$/.test(u.protocol)) throw new Error('Só links http ou https');
@@ -787,6 +787,7 @@ async function importarLink(texto) {
   const ext = { 'audio/mpeg': '.mp3', 'audio/mp4': '.m4a', 'audio/x-m4a': '.m4a', 'audio/flac': '.flac', 'audio/ogg': '.ogg', 'audio/wav': '.wav', 'audio/x-wav': '.wav', 'audio/webm': '.webm', 'audio/opus': '.opus' }[tipo.split(';')[0]] || '.mp3';
   const tam = Number(r.headers.get('content-length') || 0);
   if (tam > MAX_BYTES) throw new Error('Ficheiro grande demais (máx. 300 MB)');
+  if (nomeDado && String(nomeDado).trim()) nome = String(nomeDado).trim().replace(/\.(mp3|m4a|flac|ogg|opus|wav|webm|aac)$/i, '') + path.extname(nome);
   const p = caminhoLivre(nomeSeguro(nome, ext));
   const buf = Buffer.from(await r.arrayBuffer());
   if (buf.length > MAX_BYTES) throw new Error('Ficheiro grande demais (máx. 300 MB)');
@@ -867,7 +868,7 @@ http.createServer(async (req, res) => {
       catch (e) { return json(res, 400, { erro: e.message }); }
     }
     if (u.pathname === '/api/link' && req.method === 'POST') {
-      try { const { url } = JSON.parse(await corpoTexto(req) || '{}'); return json(res, 200, depoisDeJuntar(await importarLink(url))); }
+      try { const { url, nome } = JSON.parse(await corpoTexto(req) || '{}'); return json(res, 200, depoisDeJuntar(await importarLink(url, nome))); }
       catch (e) { return json(res, 400, { erro: e.message }); }
     }
     if (u.pathname === '/api/varrer' && req.method === 'POST') { varrer(); return json(res, 200, { faixas: biblioteca.length }); }
