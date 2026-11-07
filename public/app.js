@@ -233,6 +233,7 @@ function fecharEcra() { $('#ecra').hidden = true; }
 
 // dia / noite (fica guardado neste aparelho)
 function aplicarTema(t) {
+  if (window.SOM_TEMAS) return; // os temas (temas.js) mandam agora
   document.documentElement.dataset.tema = t;
   $('#tema').setAttribute('aria-checked', String(t === 'noite'));
   document.querySelector('meta[name=theme-color]').content = t === 'noite' ? '#12100D' : '#F2ECE1';

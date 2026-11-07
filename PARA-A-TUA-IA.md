@@ -82,3 +82,12 @@ Detalhes no `LEIA-ME.md`.
 - Endereços da loja: `public/loja/index.html` (lista `APPS`).
 - Cores e tipos de letra: variáveis no topo de `public/estilo.css`.
 - Há um easter egg no logótipo. Não contes onde.
+
+## Juntar músicas
+- Na app: botão «+» no topo → do aparelho (ficheiros) ou por link direto. No PC, arrastar ficheiros para a janela.
+- API: `POST /api/enviar?nome=Artista%20-%20Título.mp3` (corpo = o ficheiro) e `POST /api/link` com `{"url": "…"}`.
+  Links de streaming (YouTube, Spotify, SoundCloud…) são recusados de propósito.
+- Para o assistente da pessoa (Telegram, etc.): copia `skills/juntar-musica/` para a pasta de skills dele.
+
+## Temas
+12 temas em `public/temas.js` + `public/estilo.css` (secção «1.3 — temas»): suaves, profundos e minimalistas (preto e branco, sem vidro).

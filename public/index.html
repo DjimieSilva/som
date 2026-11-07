@@ -12,26 +12,11 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icone.svg">
 <link rel="apple-touch-icon" href="/icone-192.png">
-<script>
-  // tema antes de desenhar, para não piscar
-  try { const t = localStorage.getItem('som-tema'); document.documentElement.dataset.tema = t || (matchMedia('(prefers-color-scheme: light)').matches ? 'dia' : 'noite'); } catch { document.documentElement.dataset.tema = 'noite'; }
-</script>
+<script src="/temas.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Mono:wght@500&family=Inter+Tight:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/estilo.css">
-<script>
-  // motor de temas partilhado (porta 4600 no mesmo computador). Se não estiver a correr, fica o tema do Som.
-  (function () {
-    try {
-      var s = document.createElement('script');
-      s.src = location.protocol + '//' + location.hostname + ':4600/tema.js';
-      s.async = true;
-      s.onerror = function () { s.remove(); };
-      document.head.appendChild(s);
-    } catch (e) {}
-  })();
-</script>
 </head>
 <body>
 <div class="ambiente" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -40,8 +25,10 @@
   <div class="topo">
     <h1 class="marca"><button id="marca" aria-label="Som">Som<em>.</em></button></h1>
     <span class="etiqueta" id="contagem"></span>
+    <button id="b-juntar" class="btn-ico vidro" data-ico="juntar" aria-label="Juntar músicas" title="Juntar músicas"></button>
+    <input id="f-juntar" type="file" accept="audio/*,.mp3,.m4a,.flac,.ogg,.opus,.wav" multiple hidden>
     <button id="b-atualizar" class="btn-ico vidro" data-ico="atualizar" aria-label="Atualizar biblioteca" title="Atualizar biblioteca"></button>
-    <button id="tema" class="interruptor" role="switch" aria-label="Modo noite" title="Dia / noite">
+    <button id="tema" class="interruptor" hidden role="switch" aria-label="Modo noite" title="Dia / noite">
       <span class="sol-ico" data-ico="sol"></span><span class="lua-ico" data-ico="lua"></span><span class="bola"></span>
     </button>
     <button id="b-definicoes" class="btn-ico vidro" data-ico="definicoes" aria-label="Definições" title="Definições"></button>

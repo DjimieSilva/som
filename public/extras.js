@@ -49,31 +49,22 @@
   // 2. Definições guardadas neste aparelho
   // =========================================================
   const DEF = Object.assign({
-    tema: null,           // null = segue o interruptor; 'auto' = segue o sistema
-    fundo: 'agua', vidro: 'medio', movimento: true, duracoes: true,
+    vidro: 'medio', movimento: true, duracoes: true,
     transicao: 0, volume: 1, retomar: true,
   }, ler('definicoes', {}));
-  const FUNDOS = [
-    ['agua', 'Água clara', '#FFC53D', '#1F9D6C'],
-    ['sol', 'Sol', '#FFC53D', '#FF8A3D'],
-    ['floresta', 'Floresta', '#1F9D6C', '#174C3B'],
-    ['mar', 'Mar', '#2E8BC0', '#1F9D6C'],
-    ['aurora', 'Aurora', '#8E6CF0', '#1F9D6C'],
-    ['liso', 'Liso', '#8F877A', '#8F877A'],
-  ];
   function aplicarDef() {
     const r = document.documentElement;
-    r.dataset.fundo = DEF.fundo;
     r.dataset.vidro = DEF.vidro;
     r.dataset.movimento = DEF.movimento ? 'sim' : 'nao';
     r.dataset.duracoes = DEF.duracoes ? 'sim' : 'nao';
     audio.volume = DEF.volume;
-    if (DEF.tema === 'auto') aplicarTema(matchMedia('(prefers-color-scheme: light)').matches ? 'dia' : 'noite');
   }
   function mudarDef(k, v) { DEF[k] = v; guardar('definicoes', DEF); aplicarDef(); desenharDef(); }
-  matchMedia('(prefers-color-scheme: light)').addEventListener?.('change', () => DEF.tema === 'auto' && aplicarDef());
-  // o interruptor dia/noite tira o modo automático
-  $('#tema').addEventListener('click', () => { if (DEF.tema === 'auto') { DEF.tema = null; guardar('definicoes', DEF); } });
+  function escolherTema(id) {
+    try { localStorage.setItem('som-paleta', id); } catch {}
+    window.aplicarPaleta(id);
+    desenharDef();
+  }
   aplicarDef();
 
   // temporizador para dormir
@@ -129,16 +120,20 @@
   function desenharDef() {
     const corpo = $('#def-corpo');
     if (!corpo || !$('#definicoes').open) return;
-    const temaAtual = DEF.tema === 'auto' ? 'auto' : document.documentElement.dataset.tema;
+    const temaAtual = document.documentElement.dataset.paleta;
+    const minimal = !!(window.SOM_TEMAS[temaAtual] || {}).minimal;
+    const grupos = {};
+    for (const [id, t] of Object.entries(window.SOM_TEMAS)) (grupos[t.grupo] ||= []).push([id, t]);
+    const amostra = t => t.minimal
+      ? `<span class="tema-amostra" style="background:${t.fundo}"><s style="background:${t.acao}"></s><s style="background:${t.acao}"></s><b style="background:${t.acao};box-shadow:none"></b></span>`
+      : `<span class="tema-amostra" style="background:${t.fundo}"><i style="width:70%;height:80%;left:-12%;top:-20%;background:${t.m1}"></i><i style="width:60%;height:70%;right:-14%;bottom:-20%;background:${t.m2}"></i><b style="background:${t.acao}"></b></span>`;
     const restaDormir = dormir.ate ? Math.ceil((dormir.ate - Date.now()) / 60000) + ' min' : dormir.fimDaMusica ? 'no fim desta música' : '';
     corpo.innerHTML = `
       <section><h3>Aspeto</h3>
-        <p class="rot">Tema</p>${seg('tema', [['auto', 'Automático'], ['dia', 'Dia'], ['noite', 'Noite']], temaAtual)}
-        <p class="rot">Fundo</p>
-        <div class="fundos">${FUNDOS.map(([id, nome, a, b]) => `<button type="button" class="fundo-op ${DEF.fundo === id ? 'on' : ''}" data-def="fundo" data-valor='"${id}"' aria-pressed="${DEF.fundo === id}">
-          <span class="amostra" style="background: radial-gradient(circle at 30% 30%, ${a}, transparent 60%), radial-gradient(circle at 75% 70%, ${b}, transparent 60%), var(--fundo)"></span><span>${nome}</span></button>`).join('')}</div>
-        <p class="rot">Vidro</p>${seg('vidro', [['leve', 'Leve'], ['medio', 'Médio'], ['forte', 'Forte']], DEF.vidro)}
-        ${interruptor('movimento', DEF.movimento, 'Fundo a mexer')}
+        ${Object.entries(grupos).map(([g, lista]) => `<div class="temas-grupo"><p class="rot">${g}</p><div class="temas">${lista.map(([id, t]) =>
+          `<button type="button" class="tema-op ${id === temaAtual ? 'on' : ''}" data-paleta="${id}" aria-pressed="${id === temaAtual}">${amostra(t)}<span>${t.nome}</span></button>`).join('')}</div></div>`).join('')}
+        ${minimal ? '' : `<p class="rot">Vidro</p>${seg('vidro', [['leve', 'Leve'], ['medio', 'Médio'], ['forte', 'Forte']], DEF.vidro)}
+        ${interruptor('movimento', DEF.movimento, 'Fundo a mexer')}`}
         ${interruptor('duracoes', DEF.duracoes, 'Mostrar a duração das músicas')}
       </section>
       <section><h3>Reprodução</h3>
@@ -151,7 +146,8 @@
       </section>
       <section><h3>Biblioteca</h3>
         <button type="button" class="linha-def" id="def-atualizar"><span>Procurar músicas novas</span>${ico('atualizar')}</button>
-        <p class="nota">${faixas.length} músicas · ${estado.playlists.length} playlists · ${estado.favoritas.length} favoritas. Põe ficheiros na pasta «musica» do fixo e carrega aqui.</p>
+        <button type="button" class="linha-def" id="def-juntar"><span>Juntar músicas do aparelho ou por link</span>${ico('juntar')}</button>
+        <p class="nota">${faixas.length} músicas · ${estado.playlists.length} playlists · ${estado.favoritas.length} favoritas. No PC também podes arrastar ficheiros para a janela.</p>
       </section>
       <section><h3>Apps</h3>
         ${instalada() ? '<p class="nota">Estás a usar a Som como app.</p>' : pedidoInstalar
@@ -170,17 +166,11 @@
   $('#def-corpo').addEventListener('click', e => {
     const b = e.target.closest('button');
     if (!b) return;
-    if (b.dataset.def) {
-      const k = b.dataset.def, v = JSON.parse(b.dataset.valor);
-      if (k === 'tema') {
-        if (v === 'auto') { DEF.tema = 'auto'; }
-        else { DEF.tema = null; try { localStorage.setItem('som-tema', v); } catch {} aplicarTema(v); }
-        guardar('definicoes', DEF); aplicarDef(); return desenharDef();
-      }
-      return mudarDef(k, v);
-    }
+    if (b.dataset.paleta) return escolherTema(b.dataset.paleta);
+    if (b.dataset.def) return mudarDef(b.dataset.def, JSON.parse(b.dataset.valor));
     if (b.dataset.dormir) return marcarDormir(JSON.parse(b.dataset.dormir));
     if (b.id === 'def-atualizar') return varrer();
+    if (b.id === 'def-juntar') { $('#definicoes').close(); return $('#b-juntar').click(); }
     if (b.id === 'def-instalar' && pedidoInstalar) { pedidoInstalar.prompt(); pedidoInstalar.userChoice.finally(() => { pedidoInstalar = null; desenharDef(); }); }
   });
   $('#b-definicoes').onclick = () => { $('#definicoes').showModal(); desenharDef(); };
@@ -189,6 +179,56 @@
     try { await varrer(); } finally { b.classList.remove('a-rodar'); }
   };
   setInterval(() => { if ($('#definicoes').open && dormir.ate) desenharDef(); }, 30000);
+
+
+  // =========================================================
+  // Juntar músicas: ficheiros do aparelho ou link direto
+  // =========================================================
+  async function enviarFicheiros(lista) {
+    const fs_ = [...lista];
+    if (!fs_.length) return;
+    let ok = 0, ultima = null;
+    for (const [i, f] of fs_.entries()) {
+      aviso(`A enviar ${i + 1} de ${fs_.length}…`);
+      try {
+        const r = await fetch('/api/enviar?nome=' + encodeURIComponent(f.name), { method: 'POST', headers: { 'Content-Type': f.type || 'application/octet-stream' }, body: f });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.erro);
+        ok++; ultima = d.faixa;
+      } catch (err) { aviso(`«${f.name}»: ${err.message}`); await new Promise(r => setTimeout(r, 2200)); }
+    }
+    await carregar();
+    if (ok) { aviso(ok === 1 ? `«${ultima?.titulo || 'Música'}» juntada` : `${ok} músicas juntadas`); mostrarRecebidas(); }
+  }
+  async function juntarLink() {
+    const url = prompt('Cola o link direto do ficheiro de áudio (Google Drive, Dropbox, archive.org, um .mp3…)');
+    if (!url || !url.trim()) return;
+    aviso('A descarregar…');
+    try {
+      const r = await fetch('/api/link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: url.trim() }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.erro);
+      await carregar();
+      aviso(`«${d.faixa?.titulo || 'Música'}» juntada`);
+      mostrarRecebidas();
+    } catch (err) { alert(err.message); }
+  }
+  function mostrarRecebidas() {
+    const f = faixas.find(x => x.pasta === 'Recebidas');
+    if (!f) return;
+    vista = { aba: 'pastas', pasta: f.albumId, playlist: null }; marcarAba(); desenhar();
+  }
+  $('#f-juntar').addEventListener('change', e => { enviarFicheiros(e.target.files); e.target.value = ''; });
+  $('#b-juntar').onclick = () => abrirMenu({
+    titulo: 'Juntar músicas', sub: 'Ficam na pasta «Recebidas» do fixo', capaTxt: 'Juntar',
+    acoes: [
+      ['telemovel', 'Do aparelho (escolher ficheiros)', () => $('#f-juntar').click()],
+      ['descarregar', 'Por link direto', juntarLink],
+    ],
+  });
+  // arrastar ficheiros para a janela (PC)
+  document.addEventListener('dragover', e => { if ([...(e.dataTransfer?.items || [])].some(i => i.kind === 'file')) e.preventDefault(); });
+  document.addEventListener('drop', e => { const fl = e.dataTransfer?.files; if (fl && fl.length) { e.preventDefault(); enviarFicheiros(fl); } });
 
   // =========================================================
   // 4. Easter egg: 5 toques no logótipo

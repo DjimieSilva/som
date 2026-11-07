@@ -376,3 +376,97 @@ dialog #menu-acoes button i svg { width: 20px; height: 20px; }
 #festa.pulso .festa-texto span.on { transform: scale(1.18) rotate(2deg); }
 .festa-dica { position: absolute; bottom: max(18px, env(safe-area-inset-bottom)); color: rgba(255, 253, 248, .45); }
 @media (prefers-reduced-motion: reduce) { .festa-texto span.on { transform: none; } }
+
+/* =========================================================
+   1.3 — temas: suaves (claros), profundos (escuros) e minimalistas (preto e branco)
+   Cada tema define fundo, texto, vidro, manchas e a cor de ação (--sol), que pinta os botões.
+   ========================================================= */
+:root {
+  --sol-claro: color-mix(in srgb, var(--sol) 55%, #fff);
+  --sol-escuro: color-mix(in srgb, var(--sol) 78%, #000);
+  --sombra-acao: color-mix(in srgb, var(--sol) 38%, transparent);
+  --acao-texto: var(--sol);
+}
+:root[data-tema="dia"] { --acao-texto: color-mix(in srgb, var(--sol) 70%, #000); }
+
+/* --- suaves --- */
+:root[data-paleta="areia"] { --fundo: #F2ECE1; --sol: #FFC53D; --sobre-sol: #12100D;
+  --mancha-1: rgba(255, 197, 61, .55); --mancha-2: rgba(31, 157, 108, .30); --mancha-3: rgba(255, 255, 255, .7); }
+:root[data-paleta="nevoa"] { --fundo: #EDF0F4; --texto: #14181F; --texto-2: #4A5261; --texto-3: #8890A0; --sol: #3E6FE0; --sobre-sol: #fff;
+  --mancha-1: rgba(120, 160, 255, .38); --mancha-2: rgba(190, 170, 255, .30); --mancha-3: rgba(255, 255, 255, .8); }
+:root[data-paleta="pessego"] { --fundo: #FBEFE8; --texto: #24140F; --texto-2: #6A4A40; --texto-3: #A88A80; --sol: #E46B4F; --sobre-sol: #fff;
+  --mancha-1: rgba(255, 170, 130, .55); --mancha-2: rgba(255, 140, 170, .32); --mancha-3: rgba(255, 245, 220, .8); }
+:root[data-paleta="menta"] { --fundo: #E9F4EE; --texto: #0F1F18; --texto-2: #3F5A4D; --texto-3: #7E978B; --sol: #179468; --sobre-sol: #fff;
+  --mancha-1: rgba(120, 220, 170, .5); --mancha-2: rgba(255, 210, 110, .32); --mancha-3: rgba(255, 255, 255, .8); }
+:root[data-paleta="lavanda"] { --fundo: #F1EDF9; --texto: #1A1528; --texto-2: #554C6E; --texto-3: #958CAB; --sol: #7558E0; --sobre-sol: #fff;
+  --mancha-1: rgba(180, 150, 255, .45); --mancha-2: rgba(140, 200, 255, .32); --mancha-3: rgba(255, 255, 255, .8); }
+
+/* --- profundos --- */
+:root[data-paleta="noite"] { --fundo: #0E0C0A; --sol: #FFC53D; --sobre-sol: #12100D;
+  --mancha-1: rgba(255, 197, 61, .36); --mancha-2: rgba(31, 157, 108, .42); --mancha-3: rgba(242, 236, 225, .12); }
+:root[data-paleta="floresta"] { --fundo: #07120D; --sol: #5BD6A0; --sobre-sol: #04140C; --texto-2: #A9C2B5; --texto-3: #6F8A7C;
+  --mancha-1: rgba(31, 157, 108, .55); --mancha-2: rgba(23, 76, 59, .7); --mancha-3: rgba(255, 197, 61, .14); }
+:root[data-paleta="oceano"] { --fundo: #050E1A; --sol: #4CC2FF; --sobre-sol: #031220; --texto-2: #A7B9CC; --texto-3: #6C8197;
+  --mancha-1: rgba(40, 120, 220, .5); --mancha-2: rgba(20, 170, 170, .38); --mancha-3: rgba(180, 220, 255, .10); }
+:root[data-paleta="aurora"] { --fundo: #0C0918; --sol: #B79CFF; --sobre-sol: #140C2A; --texto-2: #B5ACCB; --texto-3: #7B7293;
+  --mancha-1: rgba(142, 108, 240, .5); --mancha-2: rgba(31, 190, 140, .38); --mancha-3: rgba(255, 140, 220, .12); }
+:root[data-paleta="brasa"] { --fundo: #130806; --sol: #FF7A45; --sobre-sol: #1A0A04; --texto-2: #CDB0A6; --texto-3: #8E7068;
+  --mancha-1: rgba(255, 90, 40, .45); --mancha-2: rgba(200, 30, 60, .38); --mancha-3: rgba(255, 197, 61, .14); }
+
+/* --- minimalistas: sem vidro, sem manchas, botões lisos e quadrados suaves --- */
+:root[data-paleta="papel"] { --fundo: #FFFFFF; --texto: #0A0A0A; --texto-2: #444; --texto-3: #8A8A8A; --sol: #0A0A0A; --sobre-sol: #FFFFFF;
+  --vidro: #FFFFFF; --vidro-forte: #F4F4F4; --vidro-hover: #F0F0F0; --aresta: #E2E2E2; --linha: #EDEDED; --pista: #E2E2E2; --acao-texto: #0A0A0A; }
+:root[data-paleta="tinta"] { --fundo: #000000; --texto: #FFFFFF; --texto-2: #BDBDBD; --texto-3: #7A7A7A; --sol: #FFFFFF; --sobre-sol: #000000;
+  --vidro: #0B0B0B; --vidro-forte: #161616; --vidro-hover: #1C1C1C; --aresta: #262626; --linha: #1C1C1C; --pista: #333; --acao-texto: #FFFFFF; }
+:root[data-estilo="minimal"] { --raio: 14px; --sombra: none; --brilho: transparent; --mancha-1: transparent; --mancha-2: transparent; --mancha-3: transparent; }
+:root[data-estilo="minimal"] .ambiente { display: none; }
+:root[data-estilo="minimal"] .vidro,
+:root[data-estilo="minimal"] .btn-ico.vidro,
+:root[data-estilo="minimal"] .redondo.vidro,
+:root[data-estilo="minimal"] .texto-btn.vidro {
+  -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--vidro); box-shadow: none; border: 1px solid var(--aresta);
+}
+:root[data-estilo="minimal"] .btn-ico.vidro, :root[data-estilo="minimal"] .redondo.vidro { border-radius: 12px; background: var(--fundo); }
+:root[data-estilo="minimal"] .play { background: var(--sol); border: 0; box-shadow: none; border-radius: 50%; }
+:root[data-estilo="minimal"] .play svg { filter: none; }
+:root[data-estilo="minimal"] .segmentos { background: transparent; border: 0; padding: 0; gap: 6px; }
+:root[data-estilo="minimal"] .segmentos button { border: 1px solid var(--aresta); border-radius: 10px; }
+:root[data-estilo="minimal"] .segmentos button.on { background: var(--sol); color: var(--sobre-sol); border-color: var(--sol); box-shadow: none; }
+:root[data-estilo="minimal"] .seg-def button.on { box-shadow: none; border-radius: 9px; }
+:root[data-estilo="minimal"] .seg-def { border-radius: 12px; }
+:root[data-estilo="minimal"] .lista-vidro { padding: 0 4px; }
+:root[data-estilo="minimal"] .capa { border-radius: 6px; box-shadow: none; }
+:root[data-estilo="minimal"] .hero .capa, :root[data-estilo="minimal"] .capa.grande { box-shadow: none; }
+:root[data-estilo="minimal"] .capa img { filter: grayscale(1) contrast(1.05); }
+:root[data-estilo="minimal"] .linha.atual .txt b { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+:root[data-estilo="minimal"] #ecra::before { background: var(--fundo); opacity: .92; }
+:root[data-estilo="minimal"] .ecra-fundo { display: none; }
+:root[data-estilo="minimal"] .controlos { border-radius: 18px; }
+:root[data-estilo="minimal"] .marca em { color: var(--texto); }
+:root[data-estilo="minimal"] dialog::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .45); }
+:root[data-estilo="minimal"] #aviso { background: var(--texto); color: var(--fundo); border: 0; }
+
+/* botões e destaques seguem a cor do tema (substitui o amarelo fixo) */
+.play {
+  background: radial-gradient(120% 90% at 50% 0%, var(--sol-claro) 0%, var(--sol) 48%, var(--sol-escuro) 100%);
+  color: var(--sobre-sol);
+  box-shadow: 0 8px 22px var(--sombra-acao), inset 0 1.5px 0 rgba(255, 255, 255, .6), inset 0 -2px 3px rgba(0, 0, 0, .18);
+}
+.segmentos button.on { box-shadow: 0 2px 10px var(--sombra-acao), inset 0 1px 0 rgba(255, 255, 255, .45); }
+.seg-def button.on { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 2px 8px var(--sombra-acao); }
+:root[data-tema] .linha.atual .txt b, :root[data-tema] .controlos button.on, :root[data-tema] .acao.fav { color: var(--acao-texto); }
+.marca em { color: var(--sol); }
+
+/* escolher tema nas definições */
+.temas-grupo { margin: 4px 0 12px; }
+.temas { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.tema-op { display: flex; flex-direction: column; gap: 6px; align-items: stretch; padding: 6px; border-radius: 14px; font-size: 13px; color: var(--texto-2); border: 1.5px solid transparent; text-align: center; }
+.tema-op.on { border-color: var(--sol); color: var(--texto); background: var(--vidro); }
+.tema-amostra { position: relative; aspect-ratio: 1.25; border-radius: 10px; overflow: hidden; border: 1px solid var(--aresta); }
+.tema-amostra i { position: absolute; border-radius: 50%; filter: blur(8px); }
+.tema-amostra b { position: absolute; right: 8px; bottom: 8px; width: 18px; height: 18px; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.tema-amostra s { position: absolute; left: 8px; top: 9px; height: 4px; width: 46%; border-radius: 2px; text-decoration: none; }
+.tema-amostra s + s { top: 17px; width: 30%; opacity: .6; }
+.interruptor[hidden] { display: none !important; }
+:root[data-estilo="minimal"][data-paleta="papel"] { --vidro: #FFFFFF; --vidro-forte: #F4F4F4; }
+:root[data-estilo="minimal"][data-paleta="tinta"] { --vidro: #0B0B0B; --vidro-forte: #161616; }

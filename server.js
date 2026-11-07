@@ -731,6 +731,77 @@ async function procurarMomento(texto, n = 8) {
 }
 
 // =====================================================================
+// Juntar música: ficheiro enviado do aparelho ou link direto para um ficheiro de áudio
+// (sites de streaming ficam de fora: não deixam descarregar e as músicas têm direitos)
+// =====================================================================
+const RECEBIDAS = () => path.join(MUSICA, 'Recebidas');
+const MAX_BYTES = 300 * 1024 * 1024;
+const STREAMING = /(^|\.)(youtube\.com|youtu\.be|music\.youtube\.com|spotify\.com|soundcloud\.com|music\.apple\.com|deezer\.com|tidal\.com|music\.amazon\.|instagram\.com|tiktok\.com|facebook\.com)$/i;
+function nomeSeguro(nome, extPadrao = '.mp3') {
+  let n = String(nome || '').replace(/[\\/:*?"<>|\x00-\x1f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140) || 'Musica';
+  if (!EXT[path.extname(n).toLowerCase()]) n += extPadrao;
+  return n;
+}
+function caminhoLivre(nome) {
+  fs.mkdirSync(RECEBIDAS(), { recursive: true });
+  let p = path.join(RECEBIDAS(), nome), i = 2;
+  const ext = path.extname(nome), base = nome.slice(0, -ext.length);
+  while (fs.existsSync(p)) p = path.join(RECEBIDAS(), `${base} (${i++})${ext}`);
+  return p;
+}
+function receberFicheiro(req, nome) {
+  return new Promise((ok, falha) => {
+    const p = caminhoLivre(nomeSeguro(nome));
+    const tmp = p + '.parte';
+    const out = fs.createWriteStream(tmp);
+    let n = 0;
+    req.on('data', c => { n += c.length; if (n > MAX_BYTES) { req.destroy(); out.destroy(); fs.rm(tmp, () => {}); falha(new Error('Ficheiro grande demais (máx. 300 MB)')); } });
+    req.pipe(out);
+    out.on('finish', () => { if (n < 1000) { fs.rm(tmp, () => {}); return falha(new Error('Ficheiro vazio')); } fs.renameSync(tmp, p); ok(p); });
+    out.on('error', falha);
+  });
+}
+function linkDireto(u) {
+  const d = /drive\.google\.com\/file\/d\/([\w-]+)/.exec(u.href) || (u.hostname === 'drive.google.com' && u.searchParams.get('id') && [0, u.searchParams.get('id')]);
+  if (d) return new URL('https://drive.google.com/uc?export=download&id=' + d[1]);
+  if (/(^|\.)dropbox\.com$/.test(u.hostname)) { u.searchParams.set('dl', '1'); return u; }
+  return u;
+}
+async function importarLink(texto) {
+  let u;
+  try { u = new URL(String(texto || '').trim()); } catch { throw new Error('Isso não parece um link'); }
+  if (!/^https?:$/.test(u.protocol)) throw new Error('Só links http ou https');
+  if (/^(localhost|127\.|10\.|192\.168\.|169\.254\.|0\.)|\.local$|\.ts\.net$/i.test(u.hostname)) throw new Error('Esse endereço é da rede interna');
+  if (STREAMING.test(u.hostname)) throw new Error('Esse site é de streaming: não deixa descarregar e as músicas têm direitos. Usa o ficheiro que tens ou um link direto (Drive, Dropbox, Bandcamp comprado, archive.org).');
+  u = linkDireto(u);
+  const r = await fetch(u, { redirect: 'follow', headers: { 'User-Agent': 'Som/1.3 (importar música própria)' } });
+  if (!r.ok) throw new Error(`O site respondeu ${r.status}`);
+  const tipo = (r.headers.get('content-type') || '').toLowerCase();
+  const disp = r.headers.get('content-disposition') || '';
+  let nome = (/filename\*=UTF-8''([^;]+)/i.exec(disp) || [])[1];
+  nome = nome ? decodeURIComponent(nome) : (/filename="?([^";]+)"?/i.exec(disp) || [])[1] || decodeURIComponent(path.basename(new URL(r.url).pathname)) || 'Musica';
+  const extOk = !!EXT[path.extname(nome).toLowerCase()];
+  if (!tipo.startsWith('audio/') && !(extOk && /octet-stream|binary|application\/(x-)?download/.test(tipo))) {
+    throw new Error(tipo.includes('html') ? 'O link abre uma página, não um ficheiro de áudio. Precisa de ser um link direto para o .mp3/.m4a/.flac.' : `Não é áudio (${tipo || 'tipo desconhecido'})`);
+  }
+  const ext = { 'audio/mpeg': '.mp3', 'audio/mp4': '.m4a', 'audio/x-m4a': '.m4a', 'audio/flac': '.flac', 'audio/ogg': '.ogg', 'audio/wav': '.wav', 'audio/x-wav': '.wav', 'audio/webm': '.webm', 'audio/opus': '.opus' }[tipo.split(';')[0]] || '.mp3';
+  const tam = Number(r.headers.get('content-length') || 0);
+  if (tam > MAX_BYTES) throw new Error('Ficheiro grande demais (máx. 300 MB)');
+  const p = caminhoLivre(nomeSeguro(nome, ext));
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.length > MAX_BYTES) throw new Error('Ficheiro grande demais (máx. 300 MB)');
+  if (buf.length < 1000) throw new Error('O ficheiro veio vazio');
+  fs.writeFileSync(p, buf);
+  return p;
+}
+function depoisDeJuntar(p) {
+  varrer();
+  const rel = path.relative(MUSICA, p).split(path.sep).join('/');
+  const f = biblioteca.find(x => x.ficheiro === rel);
+  return { ok: true, faixa: f ? paraWeb(f) : null, faixas: biblioteca.length };
+}
+
+// =====================================================================
 // HTTP
 // =====================================================================
 function json(res, code, obj) {
@@ -791,6 +862,14 @@ http.createServer(async (req, res) => {
       return subsonic(req, res, sub[1], q);
     }
     if (u.pathname === '/api/biblioteca') return json(res, 200, biblioteca.map(paraWeb));
+    if (u.pathname === '/api/enviar' && req.method === 'POST') {
+      try { return json(res, 200, depoisDeJuntar(await receberFicheiro(req, u.searchParams.get('nome')))); }
+      catch (e) { return json(res, 400, { erro: e.message }); }
+    }
+    if (u.pathname === '/api/link' && req.method === 'POST') {
+      try { const { url } = JSON.parse(await corpoTexto(req) || '{}'); return json(res, 200, depoisDeJuntar(await importarLink(url))); }
+      catch (e) { return json(res, 400, { erro: e.message }); }
+    }
     if (u.pathname === '/api/varrer' && req.method === 'POST') { varrer(); return json(res, 200, { faixas: biblioteca.length }); }
     if (u.pathname === '/api/estado' && req.method === 'GET') return json(res, 200, lerEstado());
     if (u.pathname === '/api/estado' && req.method === 'PUT') {
