@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Som</title>
+<meta name="theme-color" content="#12100D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Som">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icone.svg">
+<link rel="apple-touch-icon" href="/icone-192.png">
+<script>
+  // tema antes de desenhar, para não piscar
+  try { const t = localStorage.getItem('som-tema'); document.documentElement.dataset.tema = t || (matchMedia('(prefers-color-scheme: light)').matches ? 'dia' : 'noite'); } catch { document.documentElement.dataset.tema = 'noite'; }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Mono:wght@500&family=Inter+Tight:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/estilo.css">
+<script>
+  // motor de temas partilhado (porta 4600 no mesmo computador). Se não estiver a correr, fica o tema do Som.
+  (function () {
+    try {
+      var s = document.createElement('script');
+      s.src = location.protocol + '//' + location.hostname + ':4600/tema.js';
+      s.async = true;
+      s.onerror = function () { s.remove(); };
+      document.head.appendChild(s);
+    } catch (e) {}
+  })();
+</script>
+</head>
+<body>
+<div class="ambiente" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<header class="vidro">
+  <div class="topo">
+    <h1 class="marca"><button id="marca" aria-label="Som">Som<em>.</em></button></h1>
+    <span class="etiqueta" id="contagem"></span>
+    <button id="b-atualizar" class="btn-ico vidro" data-ico="atualizar" aria-label="Atualizar biblioteca" title="Atualizar biblioteca"></button>
+    <button id="tema" class="interruptor" role="switch" aria-label="Modo noite" title="Dia / noite">
+      <span class="sol-ico" data-ico="sol"></span><span class="lua-ico" data-ico="lua"></span><span class="bola"></span>
+    </button>
+    <button id="b-definicoes" class="btn-ico vidro" data-ico="definicoes" aria-label="Definições" title="Definições"></button>
+  </div>
+  <input id="procura" type="search" placeholder="Procurar música, artista ou playlist" autocomplete="off">
+  <nav id="abas" class="segmentos">
+    <button data-aba="musicas" class="on">Tudo</button>
+    <button data-aba="momento">Momento</button>
+    <button data-aba="playlists">Playlists</button>
+    <button data-aba="favoritas">Favoritas</button>
+    <button data-aba="pastas">Álbuns</button>
+    <button data-aba="fila">Fila</button>
+  </nav>
+</header>
+
+<main id="lista"></main>
+
+<footer id="leitor" class="vidro">
+  <div id="mini">
+    <div class="capa" id="mini-capa" aria-hidden="true"></div>
+    <button id="info" aria-label="Abrir o leitor">
+      <strong id="l-titulo">Nada a tocar</strong>
+      <span><span id="l-artista">Escolhe uma música</span></span>
+    </button>
+    <div class="botoes">
+      <button class="b-fav acao" aria-label="Favorita" data-ico="coracao"></button>
+      <button class="b-play play" aria-label="Tocar" data-ico="play"></button>
+      <button class="b-seg btn-ico" aria-label="Seguinte" data-ico="seguinte"></button>
+    </div>
+  </div>
+  <input id="progresso" type="range" min="0" max="1000" value="0" step="1" aria-label="Posição na faixa">
+</footer>
+
+<section id="ecra" hidden>
+  <div class="ecra-fundo" id="ecra-fundo" aria-hidden="true"></div>
+  <div class="ecra-corpo">
+    <div class="ecra-topo">
+      <button id="fechar-ecra" class="vidro redondo" aria-label="Fechar" data-ico="baixo"></button>
+      <span class="etiqueta" id="ecra-contexto">A tocar</span>
+      <button id="ecra-menu" class="vidro redondo" aria-label="Mais opções" data-ico="mais"></button>
+    </div>
+    <div class="capa grande" id="ecra-capa" aria-hidden="true"></div>
+    <div id="ecra-letra" class="letra vidro" aria-live="off"></div>
+    <div class="ecra-info">
+      <div>
+        <h2 id="e-titulo"></h2>
+        <p id="e-artista"></p>
+      </div>
+      <button class="b-fav acao" aria-label="Favorita" data-ico="coracao"></button>
+    </div>
+    <input id="e-progresso" type="range" min="0" max="1000" value="0" step="1" aria-label="Posição na faixa">
+    <div class="tempos etiqueta"><span id="e-atual">0:00</span><span id="e-total">0:00</span></div>
+    <div class="controlos vidro">
+      <button id="b-aleatorio" class="btn-ico" aria-label="Aleatório" title="Aleatório" data-ico="aleatorio"></button>
+      <button id="b-ant" class="btn-ico" aria-label="Anterior" data-ico="anterior"></button>
+      <button class="b-play play grande" aria-label="Tocar" data-ico="play"></button>
+      <button class="b-seg btn-ico" aria-label="Seguinte" data-ico="seguinte"></button>
+      <button id="b-repetir" class="btn-ico" aria-label="Repetir" title="Repetir" data-ico="repetir"></button>
+    </div>
+    <div class="ecra-pe">
+      <button id="b-letra" class="texto-btn vidro" aria-pressed="false">Letra</button>
+      <button id="ver-fila" class="etiqueta">Ver a fila →</button>
+    </div>
+  </div>
+</section>
+
+<dialog id="menu" class="vidro">
+  <form method="dialog">
+    <div class="menu-cab">
+      <div class="capa" id="menu-capa" aria-hidden="true"></div>
+      <div><p id="menu-titulo"></p><span id="menu-sub" class="etiqueta"></span></div>
+    </div>
+    <div id="menu-acoes"></div>
+    <button value="fechar" class="fechar">Fechar</button>
+  </form>
+</dialog>
+
+<dialog id="definicoes" class="vidro painel">
+  <form method="dialog">
+    <div class="painel-cab">
+      <h2>Definições</h2>
+      <button value="fechar" class="btn-ico vidro" aria-label="Fechar" data-ico="fechar"></button>
+    </div>
+    <div id="def-corpo"></div>
+  </form>
+</dialog>
+
+<section id="festa" hidden aria-label="Surpresa">
+  <canvas id="festa-tela"></canvas>
+  <div class="festa-texto"><span>PUMP</span><span>UP</span><span>THE</span><span>JAM</span></div>
+  <p class="festa-dica etiqueta">toca para sair</p>
+</section>
+
+<div id="aviso" class="vidro" role="status" aria-live="polite"></div>
+<audio id="audio" preload="auto"></audio>
+<script src="/icones.js"></script>
+<script src="/app.js"></script>
+<script src="/extras.js"></script>
+</body>
+</html>

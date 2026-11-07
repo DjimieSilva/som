@@ -1,0 +1,10 @@
+# a música e os dados são de cada pessoa
+musica/
+dados/
+public/loja/apps/
+qa/
+.claude/
+node_modules/
+*.log
+importar_nossas.py
+*.ps1

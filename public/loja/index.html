@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Loja Descomplicai</title>
+<meta name="theme-color" content="#12100D">
+<link rel="icon" href="/icone.svg">
+<script>try { document.documentElement.dataset.tema = localStorage.getItem('som-tema') || (matchMedia('(prefers-color-scheme: light)').matches ? 'dia' : 'noite'); } catch { document.documentElement.dataset.tema = 'noite'; }</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@500&family=Inter+Tight:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/estilo.css">
+<style>
+  main { padding: 6px 16px 48px; }
+  .loja-topo { display: flex; align-items: center; gap: 10px; }
+  .loja-topo h1 { flex: 1; margin: 0; font: 600 30px/1 var(--serifa); color: var(--texto); }
+  .loja-topo h1 em { color: var(--sol); font-style: normal; }
+  .intro { color: var(--texto-2); margin: 8px 0 0; font-size: 15px; }
+  .app { border-radius: var(--raio); padding: 16px; margin-top: 14px; }
+  .app-cab { display: flex; gap: 14px; align-items: center; }
+  .app-cab img { width: 72px; height: 72px; border-radius: 18px; box-shadow: var(--sombra); flex: none; background: var(--tinta); }
+  .app-cab h2 { margin: 0; font: 600 24px/1.1 var(--serifa); color: var(--texto); }
+  .app-cab p { margin: 4px 0 0; color: var(--texto-3); font-size: 13px; }
+  .app-desc { color: var(--texto-2); margin: 12px 0; font-size: 15px; line-height: 1.5; }
+  .app-acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .botao { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; font-weight: 600; font-size: 15px; text-decoration: none; color: var(--texto); }
+  .botao svg { width: 18px; height: 18px; }
+  .botao.principal { background: radial-gradient(120% 90% at 50% 0%, #FFE08A 0%, #FFC53D 45%, #F2A900 100%); color: #12100D; border: 1px solid rgba(255,255,255,.55); box-shadow: 0 8px 22px rgba(255,170,0,.32), inset 0 1.5px 0 rgba(255,255,255,.75); }
+  .botao.vidro { background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.04) 55%, rgba(0,0,0,.06)), var(--vidro-forte); }
+  .botao[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+  .ajuda { border-radius: var(--raio); padding: 16px 18px; margin-top: 18px; color: var(--texto-2); font-size: 14px; line-height: 1.55; }
+  .ajuda h3 { margin: 0 0 6px; font: 600 18px var(--serifa); color: var(--texto); }
+  .ajuda ol { margin: 6px 0 0; padding-left: 20px; }
+  .etiqueta-mini { display: inline-block; font: 500 10.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--vidro-forte); color: var(--texto-2); margin-left: 6px; vertical-align: 2px; }
+</style>
+</head>
+<body>
+<div class="ambiente" aria-hidden="true"><i></i><i></i><i></i></div>
+<header class="vidro">
+  <div class="loja-topo">
+    <h1>Loja<em>.</em></h1>
+    <a class="btn-ico vidro" href="/" aria-label="Voltar à Som" data-ico="voltar"></a>
+  </div>
+  <p class="intro">As apps da casa. Funcionam com o Tailscale ligado.</p>
+</header>
+<main id="apps"></main>
+<script src="/icones.js"></script>
+<script>
+  const APPS = [
+    { id: 'som', nome: 'Som', sub: 'Música · a tua biblioteca no fixo', icone: '/icone-192.png', web: '/',
+      desc: 'Playlists, fila, aleatório, letras, favoritas e tudo sincronizado entre o PC e o telemóvel. A app Android toca com o ecrã bloqueado e mostra os controlos na notificação.' },
+    { id: 'cozinhai', nome: 'cozinhAI', sub: 'Receitas · plano e compras', icone: '/loja/cozinhai.png', web: location.protocol + '//' + location.hostname + ':10000/cozinha/',
+      desc: 'Receitas guardadas a partir de um link, modo cozinhar passo a passo, plano da semana e lista de compras.' },
+  ];
+  const mb = n => (n / 1048576).toFixed(1).replace('.', ',') + ' MB';
+  async function desenhar() {
+    let info = [];
+    try { info = await fetch('/loja/apps/info.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : []); } catch {}
+    const el = document.getElementById('apps');
+    el.innerHTML = APPS.map(a => {
+      const apk = info.find(i => i.id === a.id || i.ficheiro === a.id + '.apk');
+      return `<article class="app vidro">
+        <div class="app-cab"><img src="${a.icone}" alt="" onerror="this.src='/icone-192.png'">
+          <div><h2>${a.nome}${apk ? `<span class="etiqueta-mini">v${apk.versao}</span>` : ''}</h2><p>${a.sub}</p></div></div>
+        <p class="app-desc">${a.desc}</p>
+        <div class="app-acoes">
+          ${apk ? `<a class="botao principal" href="/loja/apps/${apk.ficheiro}" download>${ico('descarregar')}Instalar no Android · ${mb(apk.tamanhoBytes)}</a>`
+                : `<span class="botao principal" aria-disabled="true">${ico('relogio')}App Android a caminho</span>`}
+          <a class="botao vidro" href="${a.web}">${ico('telemovel')}Abrir no browser</a>
+        </div>
+      </article>`;
+    }).join('') + `<section class="ajuda vidro"><h3>Instalar no Xiaomi</h3>
+      <ol>
+        <li>Toca em «Instalar no Android». O ficheiro descarrega.</li>
+        <li>Abre-o (na notificação ou em Ficheiros → Downloads).</li>
+        <li>Na primeira vez, o telemóvel pede para permitir apps desta origem: aceita para o Chrome.</li>
+        <li>Toca em «Instalar». Se o MIUI avisar, escolhe «Instalar mesmo assim» (a app é nossa, não vem da Play Store).</li>
+        <li>Para a música não parar com o ecrã bloqueado: Definições → Apps → Som → Poupança de bateria → «Sem restrições».</li>
+      </ol>
+      <p style="margin:10px 0 0">No PC: abre a app no Chrome ou no Edge e carrega no ícone de instalar, na barra do endereço.</p></section>`;
+  }
+  desenhar();
+</script>
+</body>
+</html>
